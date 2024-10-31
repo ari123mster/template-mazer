@@ -44,7 +44,16 @@ class RoleController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'name' => 'required|unique:roles,name',
+            'permission' => 'required',
+        ]);
+
+        $role = Role::create(['name' => $request->input('name')]);
+        $role->syncPermissions($request->input('permission'));
+        // dd($role);
+
+        return redirect()->route('role.index');
     }
 
     /**
@@ -76,6 +85,9 @@ class RoleController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $roles = Role::find($id);
+        $roles->delete();
+
+        return redirect()->route('role.index');
     }
 }
