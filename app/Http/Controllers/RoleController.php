@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-
+use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 class RoleController extends Controller
 {
     /**
@@ -11,7 +13,9 @@ class RoleController extends Controller
      */
     public function index()
     {
-        //
+        $roles = role::get();
+
+        return view('v.role.index', compact('roles'));
     }
 
     /**
@@ -19,7 +23,20 @@ class RoleController extends Controller
      */
     public function create()
     {
-        //
+        $permissionNames = [
+            'acl'
+        ];
+
+        // Mengambil permissions yang sesuai dengan nama
+        $permissions = [];
+        foreach ($permissionNames as $name) {
+            $permissions[$name] = DB::table('permissions')
+                ->where('permissions.name', 'LIKE', "%$name%")
+                ->select('permissions.name')
+                ->get();
+        }
+
+        return view('v.role.create', compact('permissions'));
     }
 
     /**

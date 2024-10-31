@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Spatie\Permission\Models\Role;
+use Illuminate\Support\Facades\DB;
 class UserController extends Controller
 {
     /**
@@ -30,7 +31,22 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'name' => 'required',
+            'email' => 'required',
+            'roles' => 'required',
+            'password' => 'required',
+        ]);
+
+        $user = User::create([
+            'name' => $request['name'],
+            'email' => $request['email'],
+
+            'password' => bcrypt($request['password']),
+        ]);
+        $user->assignRole($request['roles']);
+
+        return redirect()->route('user.index');
     }
 
     /**
@@ -38,7 +54,7 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        //
+
     }
 
     /**
@@ -46,7 +62,10 @@ class UserController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        $user = User::find($id);
+        $roles = Role::get();
+
+        return view('v.user.edit', compact('user', 'roles'));
     }
 
     /**
@@ -54,7 +73,22 @@ class UserController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $request->validate([
+            'name' => 'required',
+            'email' => 'required',
+            'password' => 'required',
+            'roles' => 'required',
+        ]);
+        $user = User::find($id);
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->password = bcrypt($request->password);
+
+        DB::table('model_has_roles')->where('model_id', $id)->delete();
+        $user->assignRole($request['roles']);
+        $user->save();
+
+        return redirect()->route('user.index');
     }
 
     /**
@@ -62,6 +96,9 @@ class UserController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $user = User::find($id);
+        $user->delete();
+
+        return redirect()->route('user.index');
     }
 }

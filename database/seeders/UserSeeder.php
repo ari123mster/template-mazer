@@ -17,7 +17,7 @@ class UserSeeder extends Seeder
     {
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        Permission::create(['name' => 'acl_main_index']);
+        Permission::create(['name' => 'acl_main_view']);
         Permission::create(['name' => 'acl_user_index']);
         Permission::create(['name' => 'acl_user_create']);
         Permission::create(['name' => 'acl_user_edit']);
