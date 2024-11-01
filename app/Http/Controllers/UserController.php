@@ -6,12 +6,23 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\DB;
+use App\Models\ActivityLog;
+use Illuminate\Support\Facades\Auth;
 class UserController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+
+     protected function logActivity($action, $description)
+    {
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'action' => $action,
+            'description' => $description,
+        ]);
+    }
+     public function index()
     {
        $data=User::all();
        return view('v.user.index',compact('data'));
@@ -34,18 +45,18 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required',
             'email' => 'required',
-            'roles' => 'required',
+            'role' => 'required|exists:roles,id',
             'password' => 'required',
         ]);
 
         $user = User::create([
             'name' => $request['name'],
             'email' => $request['email'],
-
             'password' => bcrypt($request['password']),
         ]);
-        $user->assignRole($request['roles']);
-
+        $roleName = Role::find($request['role'])->name;
+        $user->assignRole($roleName);
+        $this->logActivity('create', 'Created a new user: ' . $request->name);
         return redirect()->route('user.index');
     }
 
@@ -62,10 +73,12 @@ class UserController extends Controller
      */
     public function edit(string $id)
     {
-        $user = User::find($id);
-        $roles = Role::get();
 
-        return view('v.user.edit', compact('user', 'roles'));
+        $user = User::find($id);
+        $roles = Role::all(); // Mengambil semua role
+        $userRoles = $user->getRoleNames(); // Mendapatkan nama role yang dimiliki user
+
+        return view('v.user.edit', compact('user', 'roles', 'userRoles'));
     }
 
     /**
@@ -73,22 +86,39 @@ class UserController extends Controller
      */
     public function update(Request $request, string $id)
     {
+
         $request->validate([
             'name' => 'required',
-            'email' => 'required',
-            'password' => 'required',
-            'roles' => 'required',
+            'email' => 'required|email',
+            'role' => 'required',
         ]);
+
+        // Temukan user berdasarkan ID
         $user = User::find($id);
+
+        // Update data user
         $user->name = $request->name;
         $user->email = $request->email;
-        $user->password = bcrypt($request->password);
 
+        // Jika password diisi, update password
+        if ($request->filled('password')) {
+            $user->password = bcrypt($request->password);
+        }
+
+        // Hapus role lama
         DB::table('model_has_roles')->where('model_id', $id)->delete();
-        $user->assignRole($request['roles']);
+
+        // Ambil nama role baru dan assign
+        $roleName = Role::find($request['role'])->name;
+        $user->assignRole($roleName);
+
+        // Simpan perubahan
         $user->save();
 
-        return redirect()->route('user.index');
+        // Log aktivitas
+        $this->logActivity('edit', 'Updated user: ' . $request->name);
+
+        return redirect()->route('user.index')->with('success', 'User updated successfully.');
     }
 
     /**
@@ -98,7 +128,7 @@ class UserController extends Controller
     {
         $user = User::find($id);
         $user->delete();
-
+        $this->logActivity('delete', 'Deleted user with ID: ' . $id);
         return redirect()->route('user.index');
     }
 }

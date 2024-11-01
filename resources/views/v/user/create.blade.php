@@ -41,11 +41,10 @@
                                             <label>Hak Akses</label>
                                         </div>
                                         <div class="col-md-8 form-group">
-                                            <select class="form-control" name="roles" id="roles">
-                                                <option>--pilih--</option>
-                                                @foreach ($roles as $roles)
-                                                    <option value="{{ $roles->id }}">{{ $roles->name }}
-                                                    </option>
+                                            <select class="form-control" name="role" id="roles">
+                                                <option value="">--pilih--</option>
+                                                @foreach ($roles as $role)
+                                                    <option value="{{ $role->id }}">{{ $role->name }}</option>
                                                 @endforeach
                                             </select>
                                         </div>

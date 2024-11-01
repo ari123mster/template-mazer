@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Carbon\Carbon;
+use App\Models\ActivityLog;
 class LogController extends Controller
 {
     /**
@@ -29,8 +30,9 @@ class LogController extends Controller
         });
 
         $allUsers = $activeUsers->merge($inactiveUsers);
+        $logs = ActivityLog::with('user')->latest()->get();
 
-        return view('v.log.index', compact('allUsers'));
+        return view('v.log.index', compact('allUsers','logs'));
     }
 
     /**

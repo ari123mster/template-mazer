@@ -6,16 +6,12 @@
                 <div class="section-header-back">
                     <a href="{{ route('user.index') }}" class="btn btn-icon"><i class="fas fa-arrow-left"></i></a>
                 </div>
-                <h1>User</h1>
-                <div class="section-header-breadcrumb">
 
-                    <div class="breadcrumb-item"><a href="#">User</a></div>
-                    <div class="breadcrumb-item"><a href="#">Tambah Data</a></div>
-                </div>
+
             </div>
 
             <div class="section-body">
-                <h2 class="section-title">Tambah Data User</h2>
+                <h2 class="section-title">Edit Data User</h2>
 
                 <section id="multiple-column-form">
                     <div class="row match-height">
@@ -47,21 +43,25 @@
                                                         <label>Roles</label>
                                                     </div>
                                                     <div class="col-md-8 form-group">
-                                                        <select class="form-control" name="roles">
-                                                            <option>..pilih..</option>
+                                                        <select class="form-control" name="role">
+
                                                             @foreach ($roles as $role)
-                                                                <option value="{{ $role->id }}">{{ $role->name }}
+                                                                <option value="{{ $role->id }}"
+                                                                    @if ($user->hasRole($role->name)) selected @endif>
+                                                                    {{ $role->name }}
                                                                 </option>
                                                             @endforeach
                                                         </select>
                                                     </div>
+
 
                                                     <div class="col-md-4">
                                                         <label>password </label>
                                                     </div>
                                                     <div class="col-md-8 form-group">
                                                         <input type="text" id="password" class="form-control"
-                                                            name="password" value="{{ $user->password }}">
+                                                            name="password"
+                                                            placeholder="Leave blank to keep current password">
                                                     </div>
 
                                                     <div class="col-sm-12 d-flex justify-content-end">
@@ -82,12 +82,7 @@
                     </div>
                 </section>
 
-
-
             </div>
-    </div>
-    </div>
-    </div>
-    </section>
+        </section>
     </div>
 @endsection
