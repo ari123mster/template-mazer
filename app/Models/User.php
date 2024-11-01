@@ -42,4 +42,13 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+    public function updateLastSeen()
+    {
+        $this->last_seen = now();
+        $this->save();
+    }
+    public function isActive()
+    {
+        return $this->last_seen >= now()->subMinutes(10);
+    }
 }
