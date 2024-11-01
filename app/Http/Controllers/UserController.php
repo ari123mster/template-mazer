@@ -128,7 +128,7 @@ class UserController extends Controller
     {
         $user = User::find($id);
         $user->delete();
-        $this->logActivity('delete', 'Deleted user with ID: ' . $id);
+        $this->logActivity('delete', 'Deleted user with User: ' . $user->name);
         return redirect()->route('user.index');
     }
 }

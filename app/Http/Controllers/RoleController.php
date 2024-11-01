@@ -6,11 +6,22 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use App\Models\ActivityLog;
+use Illuminate\Support\Facades\Auth;
 class RoleController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
+
+     protected function logActivity($action, $description)
+     {
+         ActivityLog::create([
+             'user_id' => Auth::id(),
+             'action' => $action,
+             'description' => $description,
+         ]);
+     }
     public function index()
     {
         $roles = role::get();
@@ -36,6 +47,7 @@ class RoleController extends Controller
                 ->get();
         }
 
+
         return view('v.role.create', compact('permissions'));
     }
 
@@ -52,7 +64,7 @@ class RoleController extends Controller
         $role = Role::create(['name' => $request->input('name')]);
         $role->syncPermissions($request->input('permission'));
         // dd($role);
-
+        $this->logActivity('create', 'Created a new role: ' . $role->name . ' with permissions: ' . implode(', ', $request->input('permission')));
         return redirect()->route('role.index');
     }
 
@@ -137,11 +149,12 @@ class RoleController extends Controller
         ]);
 
         $role = Role::find($id);
+        $oldName = $role->name;
         $role->name = $request->name;
         $role->save();
 
         $role->syncPermissions($request->input('permission'));
-
+        $this->logActivity('update', 'Updated role from: ' . $oldName . ' to: ' . $role->name . ' with permissions: ' . implode(', ', $request->input('permission')));
         return redirect()->route('role.index');
     }
 
@@ -152,7 +165,7 @@ class RoleController extends Controller
     {
         $roles = Role::find($id);
         $roles->delete();
-
+        $this->logActivity('delete', 'Deleted role: ' . $roles->name);
         return redirect()->route('role.index');
     }
 }
