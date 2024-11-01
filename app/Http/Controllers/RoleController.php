@@ -61,7 +61,33 @@ class RoleController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $roles = Role::find($id);
+    $permission = Permission::all();
+    $rolePermissions = DB::table('role_has_permissions')->where('role_id', $id)
+        ->pluck('permission_id', 'permission_id')
+        ->all();
+
+    // Daftar nama permission yang ingin dicari
+    $permissionNames = [
+        'acl'
+    ];
+
+    // Mengambil permissions yang sesuai dengan nama
+    $permissionsData = [];
+    foreach ($permissionNames as $name) {
+        $permissionsData[$name] = [
+            'all' => DB::table('permissions')
+                ->where('permissions.name', 'LIKE', "%$name%")
+                ->select('permissions.name')
+                ->get(),
+            'assigned' => Permission::join('role_has_permissions', 'role_has_permissions.permission_id', '=', 'permissions.id')
+                ->where('role_has_permissions.role_id', $id)
+                ->where('permissions.name', 'LIKE', "%$name%")
+                ->get()
+        ];
+    }
+
+    return view('v.role.show', compact('roles', 'permission', 'rolePermissions', 'permissionsData'));
     }
 
     /**
@@ -69,7 +95,34 @@ class RoleController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        $roles = Role::find($id);
+    $permission = Permission::get();
+    $rolePermissions = DB::table('role_has_permissions')
+        ->where('role_id', $id)
+        ->pluck('permission_id', 'permission_id')
+        ->all();
+
+    // Daftar nama permission yang ingin dicari
+    $permissionNames = [
+        'acl'
+    ];
+
+    // Mengambil permissions yang sesuai dengan nama
+    $permissions = [];
+    foreach ($permissionNames as $name) {
+        $permissions[$name] = [
+            'all' => DB::table('permissions')
+                ->where('permissions.name', 'LIKE', "%$name%")
+                ->select('permissions.name')
+                ->get(),
+            'assigned' => Permission::join('role_has_permissions', 'role_has_permissions.permission_id', '=', 'permissions.id')
+                ->where('role_has_permissions.role_id', $id)
+                ->where('permissions.name', 'LIKE', "%$name%")
+                ->get()
+        ];
+    }
+
+    return view('v.role.edit', compact('roles', 'permission', 'rolePermissions', 'permissions'));
     }
 
     /**
@@ -77,7 +130,19 @@ class RoleController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+
+        $request->validate([
+            'name' => 'required',
+            'permission' => 'required',
+        ]);
+
+        $role = Role::find($id);
+        $role->name = $request->name;
+        $role->save();
+
+        $role->syncPermissions($request->input('permission'));
+
+        return redirect()->route('role.index');
     }
 
     /**
