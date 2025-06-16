@@ -73,20 +73,36 @@
                             <thead>
                                 <tr>
                                     <th>No</th>
+                                    <th>Model</th>
+                                    <th>Model ID</th>
+                                    <th>Event</th>
                                     <th>User</th>
-                                    <th>Action</th>
-                                    <th>Description</th>
-                                    <th>Timestamp</th>
+                                    <th>IP</th>
+                                    <th>Old Data</th>
+                                    <th>New Data</th>
+                                    <th>Headers</th>
+                                    <th>Waktu</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach ($logs as $index => $log)
                                     <tr>
                                         <td>{{ $index + 1 }}</td>
-                                        <td>{{ $log->user->name }}</td>
-                                        <td>{{ ucfirst($log->action) }}</td>
-                                        <td>{{ $log->description }}</td>
-                                        <td>{{ $log->created_at->diffForHumans() }}</td>
+                                        <td>{{ class_basename($log->model) }}</td>
+                                        <td>{{ $log->model_id }}</td>
+                                        <td>{{ ucfirst($log->event) }}</td>
+                                        <td>{{ optional($log->user)->name ?? 'Guest' }}</td>
+                                        <td>{{ $log->ip }}</td>
+                                        <td>
+                                            <pre style="max-height: 150px; overflow:auto;">{{ json_encode($log->old_data, JSON_PRETTY_PRINT) }}</pre>
+                                        </td>
+                                        <td>
+                                            <pre style="max-height: 150px; overflow:auto;">{{ json_encode($log->new_data, JSON_PRETTY_PRINT) }}</pre>
+                                        </td>
+                                        <td>
+                                            <pre style="max-height: 150px; overflow:auto;">{{ json_encode($log->headers, JSON_PRETTY_PRINT) }}</pre>
+                                        </td>
+                                        <td>{{ $log->created_at->format('d M Y H:i:s') }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>

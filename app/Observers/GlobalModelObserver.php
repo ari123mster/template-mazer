@@ -24,8 +24,16 @@ if ($event === 'updated' && $changes->isEmpty()) {
     return;
 }
 
-        $request = request();
 
+        $request = request();
+        $headers = collect($request->headers->all());
+
+        // Pilih header tertentu saja
+        $allowedHeaders = ['host', 'user-agent', 'accept-language', 'referer', 'authorization'];
+
+        $filteredHeaders = $headers->filter(function ($value, $key) use ($allowedHeaders) {
+            return in_array(strtolower($key), $allowedHeaders);
+        })->toArray();
         ActivityLog::create([
             'model'     => get_class($model),
             'model_id'  => $model->getKey(),
@@ -34,7 +42,7 @@ if ($event === 'updated' && $changes->isEmpty()) {
             'new_data'  => $model->getAttributes(),
             'user_id'   => Auth::id(),
             'ip'        => $request->ip(),
-            'headers'   => json_encode($request->headers->all()),
+            'headers'   => $filteredHeaders,
         ]);
     }
 

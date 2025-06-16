@@ -30,7 +30,7 @@ class LogController extends Controller
         });
 
         $allUsers = $activeUsers->merge($inactiveUsers);
-        $logs = ActivityLog::with('user')->latest()->get();
+        $logs = ActivityLog::with('user')->latest()->paginate(50);
 
         return view('v.log.index', compact('allUsers','logs'));
     }
