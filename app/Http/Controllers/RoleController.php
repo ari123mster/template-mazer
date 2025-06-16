@@ -27,21 +27,40 @@ class RoleController extends Controller
      */
     public function create()
     {
-        $permissionNames = [
-            'acl'
-        ];
 
-        // Mengambil permissions yang sesuai dengan nama
-        $permissions = [];
-        foreach ($permissionNames as $name) {
-            $permissions[$name] = DB::table('permissions')
-                ->where('permissions.name', 'LIKE', "%$name%")
-                ->select('permissions.name')
-                ->get();
+
+        // return view('v.role.create', compact('permissions'));
+        $permissions = Permission::all();
+
+        $groupedPermissions = [];
+
+        foreach ($permissions as $permission) {
+            // Misal nama permission: acl_user_index
+            $parts = explode('_', $permission->name, 3);
+
+            // Ambil parent = acl_user (gabungan 2 kata pertama), child = sisanya
+            if (count($parts) >= 3) {
+                $parent = $parts[0] . '_' . $parts[1]; // acl_user
+                $child = $parts[2];                   // index, create, dll
+            } else {
+                // Jika hanya ada 2 bagian, parent = permission itu sendiri, child kosong
+                $parent = $permission->name;
+                $child = null;
+            }
+
+            // Simpan ke grup
+            if (!isset($groupedPermissions[$parent])) {
+                $groupedPermissions[$parent] = [];
+            }
+
+            $groupedPermissions[$parent][] = [
+                'id' => $permission->id,
+                'name' => $permission->name,
+                'child_label' => $child,
+            ];
         }
 
-
-        return view('v.role.create', compact('permissions'));
+        return view('v.role.create', ['permissions' => $groupedPermissions]);
     }
 
     /**
@@ -65,33 +84,50 @@ class RoleController extends Controller
      */
     public function show(string $id)
     {
-        $roles = Role::find($id);
-    $permission = Permission::all();
-    $rolePermissions = DB::table('role_has_permissions')->where('role_id', $id)
-        ->pluck('permission_id', 'permission_id')
-        ->all();
 
-    // Daftar nama permission yang ingin dicari
-    $permissionNames = [
-        'acl'
-    ];
 
-    // Mengambil permissions yang sesuai dengan nama
+    // return view('v.role.show', compact('roles', 'permission', 'rolePermissions', 'permissionsData'));
+    $roles = Role::findOrFail($id);
+
+    // Ambil semua permission yang mengandung 'acl' di nama-nya
+    $allPermissions = Permission::where('name', 'LIKE', 'acl%')->get();
+
+    // Ambil permission yang sudah ditugaskan ke role tersebut
+    $assignedPermissions = DB::table('role_has_permissions')
+        ->where('role_id', $id)
+        ->pluck('permission_id')
+        ->toArray();
+
+    // Kelompokkan permission berdasarkan parent prefix (sebelum underscore kedua)
+    // Misal acl_user_index => acl_user jadi kategori parent
     $permissionsData = [];
-    foreach ($permissionNames as $name) {
-        $permissionsData[$name] = [
-            'all' => DB::table('permissions')
-                ->where('permissions.name', 'LIKE', "%$name%")
-                ->select('permissions.name')
-                ->get(),
-            'assigned' => Permission::join('role_has_permissions', 'role_has_permissions.permission_id', '=', 'permissions.id')
-                ->where('role_has_permissions.role_id', $id)
-                ->where('permissions.name', 'LIKE', "%$name%")
-                ->get()
-        ];
+
+    foreach ($allPermissions as $perm) {
+        // contoh: acl_user_index -> ['acl', 'user', 'index']
+        $parts = explode('_', $perm->name);
+
+        // ambil parent sebagai dua kata pertama: acl_user
+        $parent = isset($parts[0]) && isset($parts[1]) ? $parts[0] . '_' . $parts[1] : $parts[0];
+
+        // Simpan permission ke dalam parent group
+        if (!isset($permissionsData[$parent])) {
+            $permissionsData[$parent] = [
+                'all' => [],
+                'assigned' => [],
+            ];
+        }
+
+        // Masukkan ke 'all'
+        $permissionsData[$parent]['all'][] = $perm;
+
+        // Jika permission sudah assigned, masukin juga ke assigned
+        if (in_array($perm->id, $assignedPermissions)) {
+            $permissionsData[$parent]['assigned'][] = $perm;
+        }
     }
 
-    return view('v.role.show', compact('roles', 'permission', 'rolePermissions', 'permissionsData'));
+    // Kirim data ke view
+    return view('v.role.show', compact('roles', 'permissionsData'));
     }
 
     /**
@@ -99,34 +135,70 @@ class RoleController extends Controller
      */
     public function edit(string $id)
     {
-        $roles = Role::find($id);
-    $permission = Permission::get();
-    $rolePermissions = DB::table('role_has_permissions')
-        ->where('role_id', $id)
-        ->pluck('permission_id', 'permission_id')
-        ->all();
+        $role = Role::find($id);
+        $allPermissions = Permission::all();
+        $rolePermissions = DB::table('role_has_permissions')
+            ->where('role_id', $id)
+            ->pluck('permission_id')
+            ->toArray();
 
-    // Daftar nama permission yang ingin dicari
-    $permissionNames = [
-        'acl'
-    ];
+        $groupedPermissions = [];
 
-    // Mengambil permissions yang sesuai dengan nama
-    $permissions = [];
-    foreach ($permissionNames as $name) {
-        $permissions[$name] = [
-            'all' => DB::table('permissions')
-                ->where('permissions.name', 'LIKE', "%$name%")
-                ->select('permissions.name')
-                ->get(),
-            'assigned' => Permission::join('role_has_permissions', 'role_has_permissions.permission_id', '=', 'permissions.id')
-                ->where('role_has_permissions.role_id', $id)
-                ->where('permissions.name', 'LIKE', "%$name%")
-                ->get()
-        ];
-    }
+        foreach ($allPermissions as $permission) {
+            $parts = explode('_', $permission->name, 3);
 
-    return view('v.role.edit', compact('roles', 'permission', 'rolePermissions', 'permissions'));
+            if (count($parts) >= 3) {
+                $parent = $parts[0] . '_' . $parts[1];
+                $child = $parts[2];
+            } else {
+                $parent = $permission->name;
+                $child = null;
+            }
+
+            if (!isset($groupedPermissions[$parent])) {
+                $groupedPermissions[$parent] = [];
+            }
+
+            $groupedPermissions[$parent][] = [
+                'id' => $permission->id,
+                'name' => $permission->name,
+                'child_label' => $child,
+            ];
+        }
+
+        return view('v.role.edit', [
+            'roles' => $role,
+            'permissions' => $groupedPermissions,
+            'rolePermissions' => $rolePermissions
+        ]);
+    //     $roles = Role::find($id);
+    // $permission = Permission::get();
+    // $rolePermissions = DB::table('role_has_permissions')
+    //     ->where('role_id', $id)
+    //     ->pluck('permission_id', 'permission_id')
+    //     ->all();
+
+    // // Daftar nama permission yang ingin dicari
+    // $permissionNames = [
+    //     'acl'
+    // ];
+
+    // // Mengambil permissions yang sesuai dengan nama
+    // $permissions = [];
+    // foreach ($permissionNames as $name) {
+    //     $permissions[$name] = [
+    //         'all' => DB::table('permissions')
+    //             ->where('permissions.name', 'LIKE', "%$name%")
+    //             ->select('permissions.name')
+    //             ->get(),
+    //         'assigned' => Permission::join('role_has_permissions', 'role_has_permissions.permission_id', '=', 'permissions.id')
+    //             ->where('role_has_permissions.role_id', $id)
+    //             ->where('permissions.name', 'LIKE', "%$name%")
+    //             ->get()
+    //     ];
+    // }
+
+    // return view('v.role.edit', compact('roles', 'permission', 'rolePermissions', 'permissions'));
     }
 
     /**

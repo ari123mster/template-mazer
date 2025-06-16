@@ -5,12 +5,11 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <h4 class="card-title">edit Hak Akses</h4>
+                        <h4 class="card-title">Edit Hak Akses</h4>
                     </div>
 
                     <div class="card-content">
                         <div class="card-body">
-
 
                             <form action="{{ route('role.update', $roles->id) }}" method="POST">
                                 @csrf
@@ -24,44 +23,55 @@
                                             <input type="text" id="name" class="form-control" name="name"
                                                 value="{{ $roles->name }}" readonly>
                                         </div>
+
                                         <div class="col-md-4">
                                             <label>Hak Akses</label>
                                         </div>
+
                                         <div class="col-md-8">
-                                            <div class="accordion" id="accordionExample">
-                                                @foreach ($permissionsData as $key => $data)
+                                            <div class="accordion" id="permissionsAccordion">
+                                                @foreach ($permissionsData as $parent => $data)
+                                                    @php
+                                                        // Buat ID unik untuk accordion collapse berdasarkan parent nama
+                                                        $collapseId = 'collapse' . Str::slug($parent);
+                                                        $headingId = 'heading' . Str::slug($parent);
+                                                    @endphp
                                                     <div class="accordion-item">
-                                                        <h2 class="accordion-header" id="heading{{ ucfirst($key) }}">
+                                                        <h2 class="accordion-header" id="{{ $headingId }}">
                                                             <button class="accordion-button collapsed" type="button"
                                                                 data-bs-toggle="collapse"
-                                                                data-bs-target="#collapse{{ ucfirst($key) }}"
-                                                                aria-expanded="false"
-                                                                aria-controls="collapse{{ ucfirst($key) }}">
-                                                                <p>{{ ucfirst($key) }}</p>
+                                                                data-bs-target="#{{ $collapseId }}" aria-expanded="false"
+                                                                aria-controls="{{ $collapseId }}">
+                                                                {{ ucfirst(str_replace('_', ' ', $parent)) }}
                                                             </button>
                                                         </h2>
-                                                        <div id="collapse{{ ucfirst($key) }}"
-                                                            class="accordion-collapse collapse"
-                                                            aria-labelledby="heading{{ ucfirst($key) }}"
-                                                            data-bs-parent="#accordionExample">
+
+                                                        <div id="{{ $collapseId }}" class="accordion-collapse collapse"
+                                                            aria-labelledby="{{ $headingId }}"
+                                                            data-bs-parent="#permissionsAccordion">
                                                             <div class="accordion-body">
-                                                                <h5>Assigned Permissions</h5>
-                                                                <div class="table-responsive">
-                                                                    <table class="table">
-                                                                        <tbody>
-                                                                            @foreach ($data['assigned'] as $assigned)
-                                                                                <tr>
-                                                                                    <td>
-                                                                                        <input type="text"
-                                                                                            class="form-control"
-                                                                                            value="{{ str_replace('_', ' ', $assigned->name) }}"
-                                                                                            readonly>
-                                                                                    </td>
-                                                                                </tr>
-                                                                            @endforeach
-                                                                        </tbody>
-                                                                    </table>
-                                                                </div>
+                                                                @if (count($data['assigned']) > 0)
+                                                                    <ul class="list-group">
+                                                                        @foreach ($data['assigned'] as $perm)
+                                                                            @php
+                                                                                // Ambil bagian child permission setelah parent prefix
+                                                                                $childName = Str::after(
+                                                                                    $perm->name,
+                                                                                    $parent . '_',
+                                                                                );
+                                                                                $childLabel = ucwords(
+                                                                                    str_replace('_', ' ', $childName),
+                                                                                );
+                                                                            @endphp
+                                                                            <li class="list-group-item">
+                                                                                {{ $childLabel }}
+                                                                            </li>
+                                                                        @endforeach
+                                                                    </ul>
+                                                                @else
+                                                                    <p class="text-muted">Tidak ada permission yang
+                                                                        ditugaskan.</p>
+                                                                @endif
                                                             </div>
                                                         </div>
                                                     </div>
@@ -72,13 +82,9 @@
                                                 <a href="{{ route('role.index') }}"
                                                     class="btn btn-secondary me-1 mb-1">Back</a>
                                             </div>
-
-
                                         </div>
-
                                     </div>
                                 </div>
-
                             </form>
 
                         </div>

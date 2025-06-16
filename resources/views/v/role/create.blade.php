@@ -5,82 +5,77 @@
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
-                        <h4 class="card-title">Lihat Hak Akses</h4>
+                        <h4 class="card-title">Buat Hak Akses Baru</h4>
                     </div>
 
                     <div class="card-content">
                         <div class="card-body">
-                            @if ($errors->any())
-                                <div class="alert alert-danger">
-                                    <ul>
-                                        @foreach ($errors->all() as $error)
-                                            <li>{{ $error }}</li>
-                                        @endforeach
-                                    </ul>
-                                </div>
-                            @endif
+
                             <form action="{{ route('role.store') }}" method="POST">
                                 @csrf
 
                                 <div class="form-body">
                                     <div class="row">
+                                        {{-- Nama Role --}}
                                         <div class="col-md-4">
-                                            <label>Nama</label>
+                                            <label for="name">Nama</label>
                                         </div>
                                         <div class="col-md-8 form-group">
-                                            <input type="text" id="name" class="form-control" name="name">
+                                            <input type="text" id="name" class="form-control" name="name"
+                                                value="{{ old('name') }}" required>
                                         </div>
-                                        <div class="col-md-4">
+
+                                        {{-- Hak Akses --}}
+                                        <div class="col-md-4 mt-3">
                                             <label>Hak Akses</label>
                                         </div>
-                                        <div class="col-md-8">
-                                            <div class="accordion" id="accordionExample">
-                                                <div class="accordion" id="accordionExample">
-                                                    @foreach ($permissions as $key => $permissionGroup)
-                                                        <div class="accordion-item">
-                                                            <h2 class="accordion-header" id="heading{{ ucfirst($key) }}">
-                                                                <button class="accordion-button collapsed" type="button"
-                                                                    data-bs-toggle="collapse"
-                                                                    data-bs-target="#collapse{{ ucfirst($key) }}"
-                                                                    aria-expanded="false"
-                                                                    aria-controls="collapse{{ ucfirst($key) }}">
-                                                                    <p>{{ ucfirst($key) }} </p>
-                                                                </button>
-                                                            </h2>
-                                                            <div id="collapse{{ ucfirst($key) }}"
-                                                                class="accordion-collapse collapse"
-                                                                aria-labelledby="heading{{ ucfirst($key) }}"
-                                                                data-bs-parent="#accordionExample">
-                                                                <div class="accordion-body">
-                                                                    <div class="table-responsive">
-                                                                        <table>
-                                                                            @foreach ($permissionGroup as $permission)
-                                                                                <tr>
-                                                                                    <td>
-                                                                                        <input class="form-check-input"
-                                                                                            type="checkbox"
-                                                                                            name="permission[]"
-                                                                                            value="{{ $permission->name }}">
-                                                                                    </td>
-                                                                                    <td>
-                                                                                        {{ str_replace('_', ' ', $permission->name) }}
-                                                                                    </td>
-                                                                                </tr>
-                                                                            @endforeach
-                                                                        </table>
-                                                                    </div>
-                                                                </div>
+                                        <div class="col-md-8 mt-3">
+                                            <div class="accordion" id="accordionPermissions">
+                                                @foreach ($permissions as $parent => $children)
+                                                    <div class="accordion-item">
+                                                        <h2 class="accordion-header" id="heading{{ Str::slug($parent) }}">
+                                                            <button class="accordion-button collapsed" type="button"
+                                                                data-bs-toggle="collapse"
+                                                                data-bs-target="#collapse{{ Str::slug($parent) }}"
+                                                                aria-expanded="false"
+                                                                aria-controls="collapse{{ Str::slug($parent) }}">
+                                                                {{ str_replace('_', ' ', ucfirst($parent)) }}
+                                                            </button>
+                                                        </h2>
+                                                        <div id="collapse{{ Str::slug($parent) }}"
+                                                            class="accordion-collapse collapse"
+                                                            aria-labelledby="heading{{ Str::slug($parent) }}"
+                                                            data-bs-parent="#accordionPermissions">
+                                                            <div class="accordion-body">
+                                                                <table class="table">
+                                                                    <tbody>
+                                                                        @foreach ($children as $perm)
+                                                                            <tr>
+                                                                                <td style="width: 30px;">
+                                                                                    <input type="checkbox"
+                                                                                        class="form-check-input"
+                                                                                        id="perm-{{ $perm['id'] }}"
+                                                                                        name="permission[]"
+                                                                                        value="{{ $perm['name'] }}">
+                                                                                </td>
+                                                                                <td>
+                                                                                    <label for="perm-{{ $perm['id'] }}">
+                                                                                        {{ $perm['child_label'] ? ucfirst($perm['child_label']) : str_replace('_', ' ', $perm['name']) }}
+                                                                                    </label>
+                                                                                </td>
+                                                                            </tr>
+                                                                        @endforeach
+                                                                    </tbody>
+                                                                </table>
                                                             </div>
                                                         </div>
-                                                    @endforeach
-                                                </div>
-
+                                                    </div>
+                                                @endforeach
                                             </div>
                                         </div>
 
-                                        <div class="col-sm-12 d-flex justify-content-end">
-                                            <button type="submit" class="btn btn-primary me-1 mb-1"
-                                                style="margin-top: 10px;">Submit</button>
+                                        <div class="col-sm-12 d-flex justify-content-end mt-3">
+                                            <button type="submit" class="btn btn-primary me-1 mb-1">Submit</button>
                                         </div>
 
                                     </div>
