@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-
+use App\Observers\GlobalModelObserver;
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -19,6 +19,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        //tambahkan model yang ingin di log
+        \App\Models\User::observe(GlobalModelObserver::class);
+        // \App\Models\User::observe(GlobalModelObserver::class);
     }
 }

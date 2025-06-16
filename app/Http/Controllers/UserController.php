@@ -14,14 +14,14 @@ class UserController extends Controller
      * Display a listing of the resource.
      */
 
-     protected function logActivity($action, $description)
-    {
-        ActivityLog::create([
-            'user_id' => Auth::id(),
-            'action' => $action,
-            'description' => $description,
-        ]);
-    }
+    //  protected function logActivity($action, $description)
+    // {
+    //     ActivityLog::create([
+    //         'user_id' => Auth::id(),
+    //         'action' => $action,
+    //         'description' => $description,
+    //     ]);
+    // }
      public function index()
     {
        $data=User::all();
@@ -56,7 +56,7 @@ class UserController extends Controller
         ]);
         $roleName = Role::find($request['role'])->name;
         $user->assignRole($roleName);
-        $this->logActivity('create', 'Created a new user: ' . $request->name);
+        // $this->logActivity('create', 'Created a new user: ' . $request->name);
         return redirect()->route('user.index');
     }
 
@@ -116,7 +116,7 @@ class UserController extends Controller
         $user->save();
 
         // Log aktivitas
-        $this->logActivity('edit', 'Updated user: ' . $request->name);
+        // $this->logActivity('edit', 'Updated user: ' . $request->name);
 
         return redirect()->route('user.index')->with('success', 'User updated successfully.');
     }
@@ -128,7 +128,7 @@ class UserController extends Controller
     {
         $user = User::find($id);
         $user->delete();
-        $this->logActivity('delete', 'Deleted user with User: ' . $user->name);
+        // $this->logActivity('delete', 'Deleted user with User: ' . $user->name);
         return redirect()->route('user.index');
     }
 }
