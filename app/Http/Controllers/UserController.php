@@ -10,6 +10,13 @@ use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Auth;
 class UserController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:acl_user_index')->only(['index']);
+        $this->middleware('permission:acl_user_create')->only(['create', 'store']);
+        $this->middleware('permission:acl_user_edit')->only(['edit', 'update']);
+        $this->middleware('permission:acl_user_delete')->only(['destroy']);
+    }
     /**
      * Display a listing of the resource.
      */

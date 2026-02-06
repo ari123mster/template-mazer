@@ -10,6 +10,14 @@ use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Auth;
 class RoleController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:acl_role_index')->only(['index']);
+        $this->middleware('permission:acl_role_show')->only(['show']);
+        $this->middleware('permission:acl_role_create')->only(['create', 'store']);
+        $this->middleware('permission:acl_role_edit')->only(['edit', 'update']);
+        $this->middleware('permission:acl_role_delete')->only(['destroy']);
+    }
     /**
      * Display a listing of the resource.
      */

@@ -8,6 +8,10 @@ use Carbon\Carbon;
 use App\Models\ActivityLog;
 class LogController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:acl_log_index')->only(['index']);
+    }
     /**
      * Display a listing of the resource.
      */
