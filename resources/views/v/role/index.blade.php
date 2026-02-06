@@ -21,7 +21,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="button">
-                        @can('role-create')
+                        @can('acl_role_create')
                             <a href="{{ route('role.create') }}" class="btn btn-primary">Tambah Data</a>
                         @endcan
                     </div>
@@ -41,22 +41,25 @@
                         </thead>
                         <tbody>
                             @foreach ($roles as $index => $role)
+                                @if ($role->name === 'super-admin' && !auth()->user()->hasRole('super-admin'))
+                                    @continue
+                                @endif
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
                                     <td> <span class="badge bg-primary">{{ $role->name }}</span></td>
 
                                     <td>
-                                        @can('role-show')
+                                        @can('acl_acl_show')
                                             <a href="{{ route('role.show', $role->id) }}"
                                                 class="btn btn-info d-inline">Detail</a>
                                         @endcan
 
-                                        @can('role-edit')
+                                        @can('acl_role_edit')
                                             <a href="{{ route('role.edit', $role->id) }}"
                                                 class="btn btn-success d-inline">Edit</a>
                                         @endcan
 
-                                        @can('role-delete')
+                                        @can('acl_role_delete')
                                             <form action="{{ route('role.destroy', $role->id) }}" method="POST"
                                                 class="d-inline">
 

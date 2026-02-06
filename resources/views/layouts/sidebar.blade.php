@@ -9,7 +9,7 @@
             </a>
         </li>
 
-        @can('acl_main_index')
+        @can('main_acl_index')
             <li
                 class="sidebar-item  has-sub {{ Request::is('*user*') ? 'active' : '' }} || {{ Request::routeIs('*role*') ? 'active' : '' }}|| {{ Request::routeIs('*log*') ? 'active' : '' }}">
                 <a href="#" class='sidebar-link'>

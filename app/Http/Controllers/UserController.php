@@ -40,7 +40,11 @@ class UserController extends Controller
      */
     public function create()
     {
-        $roles = Role::get();
+        $roles = Role::query()
+            ->when(!Auth::user()->hasRole('super-admin'), function ($q) {
+                $q->where('name', '!=', 'super-admin');
+            })
+            ->get();
         return view('v.user.create', compact('roles'));
     }
 
@@ -56,13 +60,17 @@ class UserController extends Controller
             'password' => 'required',
         ]);
 
+        $selectedRole = Role::find($request['role']);
+        if ($selectedRole && $selectedRole->name === 'super-admin' && !Auth::user()->hasRole('super-admin')) {
+            abort(403);
+        }
+
         $user = User::create([
             'name' => $request['name'],
             'email' => $request['email'],
             'password' => bcrypt($request['password']),
         ]);
-        $roleName = Role::find($request['role'])->name;
-        $user->assignRole($roleName);
+        $user->assignRole($selectedRole->name);
         // $this->logActivity('create', 'Created a new user: ' . $request->name);
         return redirect()->route('user.index');
     }
@@ -82,7 +90,11 @@ class UserController extends Controller
     {
 
         $user = User::find($id);
-        $roles = Role::all(); // Mengambil semua role
+        $roles = Role::query()
+            ->when(!Auth::user()->hasRole('super-admin'), function ($q) {
+                $q->where('name', '!=', 'super-admin');
+            })
+            ->get(); // Mengambil role sesuai akses
         $userRoles = $user->getRoleNames(); // Mendapatkan nama role yang dimiliki user
 
         return view('v.user.edit', compact('user', 'roles', 'userRoles'));
@@ -100,6 +112,11 @@ class UserController extends Controller
             'role' => 'required',
         ]);
 
+        $selectedRole = Role::find($request['role']);
+        if ($selectedRole && $selectedRole->name === 'super-admin' && !Auth::user()->hasRole('super-admin')) {
+            abort(403);
+        }
+
         // Temukan user berdasarkan ID
         $user = User::find($id);
 
@@ -116,8 +133,7 @@ class UserController extends Controller
         DB::table('model_has_roles')->where('model_id', $id)->delete();
 
         // Ambil nama role baru dan assign
-        $roleName = Role::find($request['role'])->name;
-        $user->assignRole($roleName);
+        $user->assignRole($selectedRole->name);
 
         // Simpan perubahan
         $user->save();

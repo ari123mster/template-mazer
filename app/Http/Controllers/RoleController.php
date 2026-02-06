@@ -81,6 +81,10 @@ class RoleController extends Controller
             'permission' => 'required',
         ]);
 
+        if ($request->input('name') === 'super-admin' && !Auth::user()->hasRole('super-admin')) {
+            abort(403);
+        }
+
         $role = Role::create(['name' => $request->input('name')]);
         $role->syncPermissions($request->input('permission'));
         // dd($role);  $this->logActivity('create', 'Created a new role: ' . $role->name . ' with permissions: ' . implode(', ', $request->input('permission')));
@@ -221,6 +225,9 @@ class RoleController extends Controller
         ]);
 
         $role = Role::find($id);
+        if ($request->input('name') === 'super-admin' && !Auth::user()->hasRole('super-admin')) {
+            abort(403);
+        }
         $oldName = $role->name;
         $role->name = $request->name;
         $role->save();
