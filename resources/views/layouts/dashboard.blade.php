@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Table Datatable jQuery - Mazer Admin Dashboard</title>
+    <title>{{ config('app.name') }}</title>
 
 
 
@@ -92,22 +92,6 @@
                 </div>
             </footer>
         </div>
-
-    </div>
-
-
-
-    <footer>
-        <div class="footer clearfix mb-0 text-muted">
-            <div class="float-start">
-                <p>2023 &copy; Mazer</p>
-            </div>
-            <div class="float-end">
-                <p>Designed By ArT4 <span class="text-danger"></span>
-                </p>
-            </div>
-        </div>
-    </footer>
 
     </div>
     <script src="{{ asset('assets/static/js/components/dark.js') }}"></script>

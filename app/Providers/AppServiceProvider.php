@@ -21,7 +21,6 @@ class AppServiceProvider extends ServiceProvider
     {
         //tambahkan model yang ingin di log
         \App\Models\User::observe(GlobalModelObserver::class);
-        \Spatie\Permission\Models\Role::observe(GlobalModelObserver::class);
-        // \App\Models\User::observe(GlobalModelObserver::class);
+        \App\Models\Role::observe(GlobalModelObserver::class);
     }
 }

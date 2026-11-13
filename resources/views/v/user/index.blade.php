@@ -47,28 +47,26 @@
                                         <td>{{ $user->name }}</td>
                                         <td>{{ $user->email }}</td>
                                         <td>
-                                            @foreach ($user->roles()->pluck('name') as $item)
-                                                <span class="badge bg-primary"> {{ $item }}</span>
+                                            @foreach ($user->roles as $role)
+                                                <span class="badge bg-primary">{{ $role->name }}</span>
                                             @endforeach
                                         </td>
                                         <td>
-                                            @can('acl_user_edit')
-                                                <a href="{{ route('user.edit', $user->id) }}"
-                                                    class="btn btn-success d-inline ">Edit</a>
-                                            @endcan
-                                            @can('acl_user_delete')
-                                                <form action="{{ route('user.destroy', $user->id) }}" method="POST"
-                                                    class="d-inline">
-
-                                                    @csrf
-                                                    @method('DELETE')
-
-                                                    <button class="btn btn-danger">
-                                                        Delete
-                                                    </button>
-                                                </form>
-                                            @endcan
-
+                                            @if (! $user->roles->contains('name', 'super-admin') || auth()->user()->hasRole('super-admin'))
+                                                @can('acl_user_edit')
+                                                    <a href="{{ route('user.edit', $user->id) }}"
+                                                        class="btn btn-success d-inline ">Edit</a>
+                                                @endcan
+                                                @can('acl_user_delete')
+                                                    <form action="{{ route('user.destroy', $user->id) }}" method="POST"
+                                                        class="d-inline" onsubmit="return confirm('Hapus user ini?')">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button class="btn btn-danger">Delete</button>
+                                                    </form>
+                                                @endcan
+                                            @endif
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>

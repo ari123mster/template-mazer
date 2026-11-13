@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\Role;
 use App\Models\User;
-use Spatie\Permission\Models\Role;
-use Illuminate\Support\Facades\DB;
-use App\Models\ActivityLog;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
+
 class UserController extends Controller
 {
     public function __construct()
@@ -17,141 +17,115 @@ class UserController extends Controller
         $this->middleware('permission:acl_user_edit')->only(['edit', 'update']);
         $this->middleware('permission:acl_user_delete')->only(['destroy']);
     }
-    /**
-     * Display a listing of the resource.
-     */
 
-    //  protected function logActivity($action, $description)
-    // {
-    //     ActivityLog::create([
-    //         'user_id' => Auth::id(),
-    //         'action' => $action,
-    //         'description' => $description,
-    //     ]);
-    // }
-     public function index()
+    public function index()
     {
-       $data=User::all();
-       return view('v.user.index',compact('data'));
+        $data = User::with('roles')->get();
+
+        return view('v.user.index', compact('data'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        $roles = Role::query()
-            ->when(!Auth::user()->hasRole('super-admin'), function ($q) {
-                $q->where('name', '!=', 'super-admin');
-            })
-            ->get();
+        $roles = $this->assignableRoles();
+
         return view('v.user.create', compact('roles'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $request->validate([
             'name' => 'required',
-            'email' => 'required',
+            'email' => 'required|email|unique:users,email',
             'role' => 'required|exists:roles,id',
             'password' => 'required',
         ]);
 
-        $selectedRole = Role::find($request['role']);
-        if ($selectedRole && $selectedRole->name === 'super-admin' && !Auth::user()->hasRole('super-admin')) {
-            abort(403);
-        }
+        $role = $this->assignableRole($request->input('role'));
 
         $user = User::create([
             'name' => $request['name'],
             'email' => $request['email'],
             'password' => bcrypt($request['password']),
         ]);
-        $user->assignRole($selectedRole->name);
-        // $this->logActivity('create', 'Created a new user: ' . $request->name);
+        $user->syncRoles($role);
+
         return redirect()->route('user.index');
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(string $id)
     {
-
+        abort(404);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(string $id)
     {
-
-        $user = User::find($id);
-        $roles = Role::query()
-            ->when(!Auth::user()->hasRole('super-admin'), function ($q) {
-                $q->where('name', '!=', 'super-admin');
-            })
-            ->get(); // Mengambil role sesuai akses
-        $userRoles = $user->getRoleNames(); // Mendapatkan nama role yang dimiliki user
+        $user = $this->editableUser($id);
+        $roles = $this->assignableRoles();
+        $userRoles = $user->getRoleNames();
 
         return view('v.user.edit', compact('user', 'roles', 'userRoles'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, string $id)
     {
+        $user = $this->editableUser($id);
 
         $request->validate([
             'name' => 'required',
-            'email' => 'required|email',
-            'role' => 'required',
+            'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($user->id)],
+            'role' => 'required|exists:roles,id',
         ]);
 
-        $selectedRole = Role::find($request['role']);
-        if ($selectedRole && $selectedRole->name === 'super-admin' && !Auth::user()->hasRole('super-admin')) {
-            abort(403);
-        }
+        $role = $this->assignableRole($request->input('role'));
 
-        // Temukan user berdasarkan ID
-        $user = User::find($id);
-
-        // Update data user
         $user->name = $request->name;
         $user->email = $request->email;
 
-        // Jika password diisi, update password
         if ($request->filled('password')) {
             $user->password = bcrypt($request->password);
         }
 
-        // Hapus role lama
-        DB::table('model_has_roles')->where('model_id', $id)->delete();
-
-        // Ambil nama role baru dan assign
-        $user->assignRole($selectedRole->name);
-
-        // Simpan perubahan
         $user->save();
-
-        // Log aktivitas
-        // $this->logActivity('edit', 'Updated user: ' . $request->name);
+        $user->syncRoles($role);
 
         return redirect()->route('user.index')->with('success', 'User updated successfully.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(string $id)
     {
-        $user = User::find($id);
-        $user->delete();
-        // $this->logActivity('delete', 'Deleted user with User: ' . $user->name);
+        $this->editableUser($id)->delete();
+
         return redirect()->route('user.index');
+    }
+
+    private function isSuperAdmin(): bool
+    {
+        return Auth::user()?->hasRole('super-admin') ?? false;
+    }
+
+    private function assignableRoles()
+    {
+        return Role::query()
+            ->when(! $this->isSuperAdmin(), fn ($query) => $query->where('name', '!=', 'super-admin'))
+            ->orderBy('name')
+            ->get();
+    }
+
+    private function assignableRole(string $id): Role
+    {
+        $role = Role::findOrFail($id);
+        abort_if($role->name === 'super-admin' && ! $this->isSuperAdmin(), 403);
+
+        return $role;
+    }
+
+    // Only a super-admin may change or remove a super-admin account (password reset = takeover).
+    private function editableUser(string $id): User
+    {
+        $user = User::findOrFail($id);
+        abort_if($user->hasRole('super-admin') && ! $this->isSuperAdmin(), 403);
+
+        return $user;
     }
 }

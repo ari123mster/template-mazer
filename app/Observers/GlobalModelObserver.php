@@ -29,7 +29,8 @@ if ($event === 'updated' && $changes->isEmpty()) {
         $headers = collect($request->headers->all());
 
         // Pilih header tertentu saja
-        $allowedHeaders = ['host', 'user-agent', 'accept-language', 'referer', 'authorization'];
+        // authorization is a bearer credential; never persist it
+        $allowedHeaders = ['host', 'user-agent', 'accept-language', 'referer'];
 
         $filteredHeaders = $headers->filter(function ($value, $key) use ($allowedHeaders) {
             return in_array(strtolower($key), $allowedHeaders);
@@ -38,8 +39,8 @@ if ($event === 'updated' && $changes->isEmpty()) {
             'model'     => get_class($model),
             'model_id'  => $model->getKey(),
             'event'     => $event,
-            'old_data'  => $event === 'updated' ? $model->getOriginal() : null,
-            'new_data'  => $model->getAttributes(),
+            'old_data'  => $event === 'updated' ? collect($model->getOriginal())->except($model->getHidden())->all() : null,
+            'new_data'  => collect($model->getAttributes())->except($model->getHidden())->all(),
             'user_id'   => Auth::id(),
             'ip'        => $request->ip(),
             'headers'   => $filteredHeaders,

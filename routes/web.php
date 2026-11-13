@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
@@ -30,16 +32,16 @@ Route::get('/', function () {
 
 // });
 Route::group(['middleware' => ['auth']], function () {
-    Route::get('/dashboard', function () {
-    return view('v.dashboard.index');
-})->middleware(['auth', 'verified'])->name('dashboard');
+    Route::get('/dashboard', DashboardController::class)->name('dashboard');
 Route::post('logout', function () {
     Auth::logout();
     return redirect()->route('login');
 })->name('logout');
     Route::resource('/user', UserController::class);
     Route::resource('/role', RoleController::class);
-    Route::resource('/log', LogController::class);
+    Route::get('/log', [LogController::class, 'index'])->name('log.index');
+    Route::get('/audit', [AuditLogController::class, 'index'])->name('audit.index');
+    Route::get('/audit/{activityLog}', [AuditLogController::class, 'show'])->name('audit.show');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

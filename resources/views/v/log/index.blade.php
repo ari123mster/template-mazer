@@ -5,104 +5,52 @@
         <div class="page-title">
             <div class="row">
                 <div class="col-12 col-md-6 order-md-1 order-last">
-                    <h3>Menu Logs User</h3>
+                    <h3>Log Aktif</h3>
+                    <p class="text-subtitle text-muted">User dianggap online bila membuka aplikasi dalam 10 menit terakhir.</p>
                 </div>
                 <div class="col-12 col-md-6 order-md-2 order-first">
                     <nav aria-label="breadcrumb" class="breadcrumb-header float-start float-lg-end">
                         <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="#">ACL</a></li>
-                            <li class="breadcrumb-item active" aria-current="page">Logs</li>
+                            <li class="breadcrumb-item">ACL</li>
+                            <li class="breadcrumb-item active" aria-current="page">Log Aktif</li>
                         </ol>
                     </nav>
                 </div>
             </div>
         </div>
 
-        <!-- Tabel Pengguna -->
         <section class="section">
             <div class="card">
-                <div class="card-header">
-                    <h4>Data Pengguna</h4>
-                </div>
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table" id="table1">
                             <thead>
                                 <tr>
-                                    <th>No</th>
-                                    <th>Name</th>
-                                    <th>Roles</th>
-                                    <th>Last Seen</th>
+                                    <th>Nama</th>
+                                    <th>Role</th>
+                                    <th>Terakhir terlihat</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($allUsers as $index => $user)
+                                @foreach ($allUsers as $user)
                                     <tr>
-                                        <td>{{ $index + 1 }}</td>
                                         <td>{{ $user->name }}</td>
                                         <td>
-                                            @foreach ($user->roles()->pluck('name') as $item)
-                                                <span class="badge bg-primary">{{ $item }}</span>
+                                            @foreach ($user->roles as $role)
+                                                <span class="badge bg-light-primary">{{ $role->name }}</span>
                                             @endforeach
                                         </td>
-                                        <td>{{ $user->formatted_last_seen }}</td>
-                                        <td>
-                                            <span class="badge {{ $user->isActive() ? 'bg-primary' : 'bg-danger' }}">
-                                                {{ $user->status }}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Tabel Aktivitas Pengguna -->
-        <section class="section mt-4">
-            <div class="card">
-                <div class="card-header">
-                    <h4>Aktivitas Pengguna</h4>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-striped" id="table2">
-                            <thead>
-                                <tr>
-                                    <th>No</th>
-                                    <th>Model</th>
-                                    <th>Model ID</th>
-                                    <th>Event</th>
-                                    <th>User</th>
-                                    <th>IP</th>
-                                    <th>Old Data</th>
-                                    <th>New Data</th>
-                                    <th>Headers</th>
-                                    <th>Waktu</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($logs as $index => $log)
-                                    <tr>
-                                        <td>{{ $index + 1 }}</td>
-                                        <td>{{ class_basename($log->model) }}</td>
-                                        <td>{{ $log->model_id }}</td>
-                                        <td>{{ ucfirst($log->event) }}</td>
-                                        <td>{{ optional($log->user)->name ?? 'Guest' }}</td>
-                                        <td>{{ $log->ip }}</td>
-                                        <td>
-                                            <pre style="max-height: 150px; overflow:auto;">{{ json_encode($log->old_data, JSON_PRETTY_PRINT) }}</pre>
+                                        <td data-order="{{ $user->last_seen ? \Illuminate\Support\Carbon::parse($user->last_seen)->timestamp : 0 }}">
+                                            {{ $user->last_seen ? \Illuminate\Support\Carbon::parse($user->last_seen)->diffForHumans() : 'belum pernah' }}
                                         </td>
                                         <td>
-                                            <pre style="max-height: 150px; overflow:auto;">{{ json_encode($log->new_data, JSON_PRETTY_PRINT) }}</pre>
+                                            @if ($user->isActive() && $user->last_seen)
+                                                <span class="badge bg-success">Online</span>
+                                            @else
+                                                <span class="badge bg-light-secondary">Offline</span>
+                                            @endif
                                         </td>
-                                        <td>
-                                            <pre style="max-height: 150px; overflow:auto;">{{ json_encode($log->headers, JSON_PRETTY_PRINT) }}</pre>
-                                        </td>
-                                        <td>{{ $log->created_at->format('d M Y H:i:s') }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
